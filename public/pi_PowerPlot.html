@@ -57,7 +57,7 @@
         });
 
         socket.on('info', function(packet){
-            console.log(packet);
+            //console.log(packet);
             for(keys in packet.payload){
                 if(keys.match(boardRegX) !== null){
                     var thing = plots[keys].data;
@@ -67,6 +67,7 @@
                     else value = value/1000;
 
                     thing.push( [packet.payload["time"], value])
+                    console.log(thing);
                 }
             }
 

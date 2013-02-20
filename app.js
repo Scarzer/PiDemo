@@ -176,7 +176,10 @@ var voltSock = io
     .on('connection', function (socket){
         voltClients[socket.id] = socket;
         console.log("Someone connected to /Volt");
-        
+        ductTape.on('packet', function(){
+            socket.emit('info', {payload : dataPacket});
+            console.log('Emitted Voltage packet');
+        }); 
 
         socket.on('disconnect', function(){
             delete voltClients[socket.id]
@@ -196,7 +199,7 @@ var powerSock = io
         });
 
         ductTape.on('packet', function(type){
-            socket.emit('info', dataPacket);
+            socket.emit('info', {payload : dataPacket});
             console.log('emitted: ' + dataPacket.type);
         });
         socket.on('disconnect', function(){

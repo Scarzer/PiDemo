@@ -38,10 +38,11 @@ var serialport = require('serialport')
         });
 
 // Global scope variables 
-var clients = 0,
+var clients = {},
     dataPacket = { /* data packet that will be populated by each serial call */
         type : undefined,  
-        time : undefined,   
+        time : undefined, 
+        current: undefined,
         board1 : undefined, 
         board2 : undefined, 
         board3 : undefined, 
@@ -49,7 +50,8 @@ var clients = 0,
         board5 : undefined, 
         board6 : undefined, 
         board7 : undefined, 
-        board8 : undefined
+        board8 : undefined,
+        totVolt : undefined,
         };
 
 function gt() {
@@ -86,8 +88,9 @@ serial.on('open', function(){
     serial.on('data', function(data){
         //console.log(data.toString());
         var inter = data.toString().split(','); //split the data into a csv string
-
+        console.log(data);
         inter.forEach(function(value, index){
+            
             if(value === 'C'){
                 dataPacket['type'] = 'current';
             }
@@ -96,6 +99,18 @@ serial.on('open', function(){
                 dataPacket['type'] = 'voltage';
             }
 
+            if(value === '\n') return;
+
+            if(dataPacket['type'] === 'current'){
+                if(index === 1) dataPacket['current'] = value;
+                if(index === 2) dataPacket['totVolt'] = value;
+                }
+
+            else if(dataPacket['type'] === 'voltage'){
+                dataPacket['board'+index] = parseFloat(value);
+
+                 }
+            /* 
             else if(value === '\n'){
                 //This is the end of that string. Ship that shit out?
             }
@@ -104,10 +119,20 @@ serial.on('open', function(){
                 return;
             }
 
-            else{
+            else if( (index < 8) && (dataPacket['type'] === 'voltage') ){
                 dataPacket['board'+index] = parseFloat(value)
             }
-        })
+
+            else if( (index === 1) && (dataPacket['type'] === 'current') ) {
+                dataPacket['current'] = value;
+                }
+
+            else if( (index === 2) && (dataPacket['type'] === 'current') ){
+                dataPacket['totVoltage'] = value;
+            }
+            */
+        });
+
         console.log(dataPacket)
         dataPacket['time'] = Date.now();
         ductTape.emit('packet', dataPacket.type);
@@ -122,10 +147,13 @@ serial.on('error', function(err){
 // Sockets are right here!!! 
 
 io.sockets.on('connection', function(socket){
-    socket.emit('start', {hours: hoursBk} )
-    
+    socket.emit('start', {hours: hoursBk} );
 
-})
+    ductTape.on('packet', function(type){
+        socket.emit('info', dataPacket);
+        console.log('emitted: ' + dataPacket.type);
+    });
+});
 
 
 // File logging stuff! 
@@ -136,6 +164,10 @@ io.sockets.on('connection', function(socket){
 // -------------------------------------------------------------------
  
 ductTape.on('packet', function(){
+    for( inerds in dataPacket){
+        if(isNaN(dataPacket[inerds]) ) delete dataPacket[inerds];
+    }
+
     fs.appendFile(dbFile, (JSON.stringify(dataPacket) + '\n'), function(){
         console.log("File was appened with:");
         ductTape.emit('logFinished')

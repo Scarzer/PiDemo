@@ -1,9 +1,16 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="../flot/styles.css" />
-    <script language="javascript" type="text/javascript" src="../flot/jquery.js"></script>
-    <script language="javascript" type="text/javascript" src="../flot/jquery/flot.js"></script>
-    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.selection.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script language="javascript" type="text/javascript" src="/flot/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="/flot/jquery/flot.js"></script>
+    <script language="javascript" type="text/javascript" src="/flot/jquery.flot.selection.js"></script>
+    <script> 
+        var socket = io.connect('http://localhost');
+        socket.on('info', function(data){
+            console.log(data);
+        });
+    </script>
     <title>Battery Demo V-Plot</title>
 
 </head>
@@ -18,9 +25,9 @@
 
         <nav class="clear">
             <ul>
-                <li><a href="pi_Home">Home Page</a></li>
-                <li><a href="pi_Vplots">Voltage</a></li>
-                <li><a href="pi_PowerPlot">Power Plot</a></li>
+                <li><a href="./index.html">Home Page</a></li>
+                <li><a href="./pi_Vplots.html">Voltage</a></li>
+                <li><a href="./pi_PowerPlot.html">Power Plot</a></li>
             </ul>
         </nav>
     </header>

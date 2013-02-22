@@ -1,0 +1,71 @@
+<html>
+<head>
+
+    <script type="text/javascript" src="public/flot/jquery.js"></script>
+    <script type="text/javascript" src="public/flot/jquery.flot.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <title> Just fucking cause</title>
+    <style>
+    
+        h3{
+            text-align : center;
+        };
+        
+    
+    </style>
+
+</head>
+<body>
+    <h1> Other shit</h1>
+    <div id="board1" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board2" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board3" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board4" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board5" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board6" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board7" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board8" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <div id="board9" style="width:900px;height:200px;"></div>
+    <h3> Time </h3>
+    <script>
+        var boardRegX = /(board)+[0-9]/
+        var socket = io.connect('http://localhost');
+            
+        var plottingData ={
+            board1 : [ ],
+            board2 : [ ],
+            board3 : [ ],
+            board4 : [ ],
+            board5 : [ ],
+            board6 : [ ],
+            board7 : [ ],
+            board8 : [ ],
+            board9 : [ ]
+        }
+
+        socket.on('stuff', function(packet){
+            console.log(packet);
+            for(boards in packet.payload){
+                if( boards.match(boardRegX) !== null){
+                    //console.log("boards: " + boards)  
+                    //console.log("plottingData: " + JSON.stringify(plottingData));
+                    var thing = plottingData[boards];
+                    console.log(boards);
+                    thing.push([packet.payload["time"], packet.payload[boards] ])
+                    $.plot($("#"+boards),[{data : thing}]); 
+                    $("#"+boards+'V').text(packet.payload[boards]);
+                    console.log(thing);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

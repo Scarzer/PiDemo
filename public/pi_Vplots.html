@@ -3,16 +3,7 @@
     <link rel="stylesheet" type="text/css" href="styles.css" />
     <script src="/socket.io/socket.io.js"></script>
     <script language="javascript" type="text/javascript" src="flot/jquery.js"></script>
-    <script language="javascript" type="text/javascript" src="flot/jquery/flot.js"></script>
-    <script> 
-        var socket = io.connect('http://localhost/voltSock');
-        socket.on('init', function(data){
-            console.log("Old Data: " + JSON.stringify(data) );
-        });
-        socket.on('info', function(data){
-            console.log(data);
-        });
-    </script>
+    <script language="javascript" type="text/javascript" src="flot/jquery.flot.js"></script>
     <title>Battery Demo V-Plot</title>
 
 </head>
@@ -35,44 +26,84 @@
     </header>
     <div class="line"></div> <!-- Divide that shit! -->
 
-    <section id="articles" style="width:70%;float:left">
+    <section id="articles" style="width:90%;text-align:center;">
 
         <article id="BMS_plots">
-            <div id="plots_board_1" class="plots">
-                <div id="flot_all_board_1" class="plot"></div>
+            <div id="plots_board1" class="plots">
+                <h3> Cell 1 - Voltage </h3>
+                <div id="board1" class="plot"></div>
             </div>
 
-            <div id="plots_board_2" class="plots">
-                <div id="flot_all_board_2" class="plot"></div>
+            <div id="plots_board2" class="plots">
+                <h3> Cell 2 - Voltage </h3>
+                <div id="board2" class="plot"></div>
             </div>
             
-            <div id="plots_board_3" class="plots">
-                <div id="flot_all_board_3" class="plot"></div>
+            <div id="plots_board3" class="plots">
+                <h3> Cell 3 - Voltage </h3>
+                <div id="board3" class="plot"></div>
             </div>
             
-            <div id="plots_board_4" class="plots">
-                <div id="flot_all_board_4" class="plot"></div>
+            <div id="plots_board4" class="plots">
+                <h3> Cell 4 - Voltage </h3>
+                <div id="board4" class="plot"></div>
             </div>
 
-            <div id="plots_board_5" class="plots">
-                <div id="flot_all_board_5" class="plot"></div>
+            <div id="plots_board5" class="plots">
+                <h3> Cell 5 - Voltage </h3>
+                <div id="board5" class="plot"></div>
             </div>
 
-            <div id="plots_board_6" class="plots">
-                <div id="flot_all_board_6" class="plot"></div>
+            <div id="plots_board6" class="plots">
+                <h3> Cell 6 - Voltage </h3>
+                <div id="board6" class="plot"></div>
             </div>
 
-            <div id="plots_board_7" class="plots">
-                <div id="flot_all_board_7" class="plot"></div>
+            <div id="plots_board7" class="plots">
+                <h3> Cell 7 - Voltage </h3>
+                <div id="board7" class="plot"></div>
             </div>
 
-            <div id="plots_board_8" class="plots">
-                <div id="flot_all_board_8" class="plot"></div>
+            <div id="plots_board8" class="plots">
+                <h3> Cell 8 - Voltage </h3>
+                <div id="board8" class="plot"></div>
+            </div>
+            <div id="plots_board9" class="plots">
+                <h3> Cell 9 - Voltage </h3>
+                <div id="board9" class="plot"></div>
             </div>
 
         </article>
     </section>
 
+    <script> 
+        var socket = io.connect('http://localhost/voltSock');
+        var boardRegX = /(board)+[0-9]/;
+        var plottingData = {
+            board1 : [ ],
+            board2 : [ ],
+            board3 : [ ],
+            board4 : [ ],
+            board5 : [ ],
+            board6 : [ ],
+            board7 : [ ],
+            board8 : [ ],
+            board9 : [ ]
+        }
+        var options = { xaxis : {mode : "time"} };
+        socket.on('init', function(packet){
+            console.log("Old Data: " + JSON.stringify(data) );
+        });
+        socket.on('info', function(packet){ 
+            console.log(packet);
+            for(boards in packet.payload){
+                if( boards.match(boardRegX) !== null){
+                    var thing = plottingData[boards];
+                    thing.push( [packet.payload["time"], (packet.payload[boards]/1000) ])
+                    $.plot($("#"+boards),[{data : thing}],options);
+                }
+            }
+        });
+    </script>
 </body>
-
 </html>

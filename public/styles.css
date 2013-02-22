@@ -65,6 +65,12 @@ p{
 	padding-bottom:1em;
 }
 
+div h3{
+        color:black;
+        text-align : center;
+
+    }
+
 .line{
 	/* The dividing line: */
 	height:1px;

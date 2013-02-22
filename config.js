@@ -4,7 +4,7 @@ var config = {
         baudrate : 115200,
     },
 
-    logFile : 'data.txt', /* Where you will log the data */
+    logFile : 'loggedData.js', /* Where you will log the data */
     hoursBack : 2 /* Number of hours you want logged */
 }
 

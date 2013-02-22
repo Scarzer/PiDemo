@@ -1,0 +1,46 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://localhost/powerSock');
+        var 
+
+        socket.on('init', function(data){
+            console.log("old Data: " + JSON.stringify(data) );
+        });
+
+        socket.on('info', function(data){
+            console.log(data);
+        });
+
+
+    </script>
+</head>
+
+<body>
+    <section id="page">
+    <header>
+        <hgroup>
+            <h1>CUNY Energy Institute</h1>
+            <h3>Power Plot</h3>
+        </hgroup>
+        <nav class="clear">
+            <ul>
+                <li><a href="index.html">Home Page</a></li>
+                <li><a href="pi_Vplots.html">Voltage</a></li>
+                <li><a href="pi_PowerPlot.html">Power Plot</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="line"></div>
+
+    <section id="articles" style="width:70%;float:left">
+       <article id="power_plot" class="plots">
+            <div id="power_plot_place" class="plot"></div>
+        </article>
+    </section>
+</body>
+</html>
+

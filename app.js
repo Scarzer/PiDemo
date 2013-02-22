@@ -17,8 +17,7 @@ var express = require('express'),
     io = require('socket.io').listen(server)
 
 // Modules that are come from builtin stuff    
-var spawn = require('child_process').spawn,
-    exec = require('child_process').exec,
+var exec = require('child_process').exec,
     fs = require('fs'),
     events = require('events'),
     ductTape = new events.EventEmitter;
@@ -53,11 +52,9 @@ var clients = {},
         board8 : undefined,
         totVolt : undefined,
         };
+    
+    pastData = undefined;
 
-function gt() {
-    // Shamelessly picked from some other code!
-    return (new Date()).getTime()-18000000;
-}
 
 // The boilerplate actually works right now. DON'T MODIFY ABOVE HERE!!!!
 // --------------------------------------------------------------------
@@ -68,6 +65,33 @@ function gt() {
 // Useful functions and the body will go right down here! 
 // --------------------------------------------------------------------
 
+// getting the past data. Now lets make it into a json of arrays!
+// Pass the data file, and it'll return an array made up of:
+// [time, power]
+// [time, totVolt]
+// [time, current]
+//
+// It's just an annon file... dun kno why. It doens't have to be
+
+var pastDataPower = (function(dbFile){
+    var finalArray = [];
+    exec('tail -n 100 ' + dbFile, function(err, stdout, stderr){
+        var outP = stdout.split('\n');
+        outP.pop()
+        var mapOut = outP.map( function(value, index){
+            var x = JSON.parse(value);
+            var xArray = [ [x.time, x.totVolt], [x.time, x.current], [x.time, x.power] ] ;
+           // console.log("Value: " + value + " Type: " + typeof(value));
+           // console.log("X: " + x + " Type: " + typeof(x));
+           // console.log("xArray: " + xArray + " Type: " + typeof(xArray));
+            return xArray
+            })
+        //console.log(JSON.stringify(mapOut));
+        console.log('emitted pastData');
+        ductTape.emit('pastDataPower', mapOut);
+    })
+
+})
 
 // --------------------------------------------------------------------
 //// Main body of the code is right here now! /////////////////////////
@@ -82,6 +106,8 @@ app.use(express.static(__dirname + '/public'));
 server.listen(80);
 // Serial communication event handlers RIGHT HERE!!!
 // ---------------------------------------------------------------------
+
+
 
 serial.on('open', function(){
     console.log('Serial port: ' + config.port + ' was opened');
@@ -110,31 +136,11 @@ serial.on('open', function(){
                 dataPacket['board'+index] = parseFloat(value);
 
                  }
-            /* 
-            else if(value === '\n'){
-                //This is the end of that string. Ship that shit out?
-            }
-
-            else if(index > 8){
-                return;
-            }
-
-            else if( (index < 8) && (dataPacket['type'] === 'voltage') ){
-                dataPacket['board'+index] = parseFloat(value)
-            }
-
-            else if( (index === 1) && (dataPacket['type'] === 'current') ) {
-                dataPacket['current'] = value;
-                }
-
-            else if( (index === 2) && (dataPacket['type'] === 'current') ){
-                dataPacket['totVoltage'] = value;
-            }
-            */
         });
 
         console.log(dataPacket)
         dataPacket['time'] = Date.now();
+        dataPacket['power'] = dataPacket['totVolt'] * dataPacket['current']
         ductTape.emit('packet', dataPacket.type);
     });
 });
@@ -146,18 +152,63 @@ serial.on('error', function(err){
 
 // Sockets are right here!!! 
 
+/*
 io.sockets.on('connection', function(socket){
-    socket.emit('start', {hours: hoursBk} );
+     
+    pastData(dbFile)
+    ductTape.on('pastData', function(theData){
+        console.log("Data4321");
+        console.log(theData);
+        socket.emit('init', {hours: hoursBk,
+                    oldData: theData });
+        })
 
     ductTape.on('packet', function(type){
         socket.emit('info', dataPacket);
         console.log('emitted: ' + dataPacket.type);
     });
 });
+*/
+
+var voltClients = {}
+var voltSock = io
+    .of('/voltSock')
+    .on('connection', function (socket){
+        voltClients[socket.id] = socket;
+        console.log("Someone connected to /Volt");
+        
+
+        socket.on('disconnect', function(){
+            delete voltClients[socket.id]
+        })
+    });
+
+var powerClients = {}
+var powerSock = io
+    .of('/powerSock')
+    .on('connection', function (socket) {
+        powerClients[socket.id] = socket;
+        console.log("Someone connected to /Power")
+        //pastDataPower(dbFile);
+        ductTape.on('pastDataPower', function(theData){
+            console.log("emitting old data");
+            socket.emit('init', {hours: hoursBk, oldData: theData});
+        });
+
+        ductTape.on('packet', function(type){
+            socket.emit('info', dataPacket);
+            console.log('emitted: ' + dataPacket.type);
+        });
+        socket.on('disconnect', function(){
+            delete powerClients[socket.id]
+        })
+    });
+    
 
 
 // File logging stuff! 
 // ---------------------------------------------------------------
+
 
 
 // The lifeboat that's made out of ducttape
@@ -165,11 +216,14 @@ io.sockets.on('connection', function(socket){
  
 ductTape.on('packet', function(){
     for( inerds in dataPacket){
-        if(isNaN(dataPacket[inerds]) ) delete dataPacket[inerds];
+        if( (isNaN(dataPacket[inerds]))  ||
+          (dataPacket[inerds] === null ) ||
+          (dataPacket[inerds] === undefined) ) 
+                delete dataPacket[inerds];
     }
 
-    fs.appendFile(dbFile, (JSON.stringify(dataPacket) + '\n'), function(){
-        console.log("File was appened with:");
+    fs.appendFile(dbFile, (JSON.stringify(dataPacket) + '\n,\n'), function(){
+        console.log("File was appened with: " + dataPacket);
         ductTape.emit('logFinished')
     })
 });

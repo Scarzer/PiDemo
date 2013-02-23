@@ -42,10 +42,13 @@
         var boardRegX = /(power|current|totVolt)/;
         //var power = {}, current = {}, totVolt = {} ;
         var plots = { power : {
+                        label : "Power (W) ",
                         data: []},
                       current : {
+                        label : "Current (A)",
                         data : []}, 
                       totVolt : {
+                        label : "Total Voltage (V)",
                         data : []}};
         var plottingData = [ plots.power, plots.current, plots.totVolt ];
 
@@ -64,7 +67,6 @@
                     else value = value/1000;
 
                     thing.push( [packet.payload["time"], value])
-                    console.log(thing);
                 }
             }
 

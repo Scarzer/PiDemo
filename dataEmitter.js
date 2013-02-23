@@ -13,7 +13,7 @@ server.listen(80);
 console.log('starting shit');
 
 io
-    .of('/voltSock')
+    .of('/powerSock')
     .on('connection', function(socket){
     var counter = 0;
     console.log('We started!');

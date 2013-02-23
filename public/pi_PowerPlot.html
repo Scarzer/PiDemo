@@ -1,21 +1,17 @@
-<html>
+</html>
 <head>
     <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script language="javascript" type="text/javascript" src="flot/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="flot/jquery.flot.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        var socket = io.connect('http://localhost/powerSock');
-        var 
 
-        socket.on('init', function(data){
-            console.log("old Data: " + JSON.stringify(data) );
-        });
-
-        socket.on('info', function(packet){
-            console.log(packet);
-        });
-
-
-    </script>
+    <style>
+        
+        .plot{
+            height:450px;
+            }
+    
+    </style>
 </head>
 
 <body>
@@ -36,11 +32,48 @@
 
     <div class="line"></div>
 
-    <section id="articles" style="width:70%;float:left">
+    <section id="articles" style="width:100%;float:left">
        <article id="power_plot" class="plots">
             <div id="power_plot_place" class="plot"></div>
         </article>
     </section>
+    <script>
+        var socket = io.connect('http://localhost/powerSock');
+        var boardRegX = /(power|current|totVolt)/;
+        //var power = {}, current = {}, totVolt = {} ;
+        var plots = { power : {
+                        data: []},
+                      current : {
+                        data : []}, 
+                      totVolt : {
+                        data : []}};
+        var plottingData = [ plots.power, plots.current, plots.totVolt ];
+
+        socket.on('init', function(data){
+            console.log("old Data: " + JSON.stringify(data) );
+        });
+
+        socket.on('info', function(packet){
+            console.log(packet);
+            for(keys in packet.payload){
+                if(keys.match(boardRegX) !== null){
+                    var thing = plots[keys].data;
+                    var value = packet.payload[keys];
+                    if(keys === "power") value = value/1000000;
+
+                    else value = value/1000;
+
+                    thing.push( [packet.payload["time"], value])
+                    console.log(thing);
+                }
+            }
+
+            $.plot($("#power_plot_place"), plottingData);
+        });
+
+
+
+    </script>
 </body>
 </html>
 
